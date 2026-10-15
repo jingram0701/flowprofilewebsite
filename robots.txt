@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /gmail-form-script.txt
+
+Sitemap: https://flowprofileplumbing.com/sitemap.xml

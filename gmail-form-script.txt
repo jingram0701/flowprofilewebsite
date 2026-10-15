@@ -1,0 +1,48 @@
+FLOW PROFILE – SEND WEBSITE ENQUIRIES FROM YOUR OWN GMAIL
+==========================================================
+
+1. Sign in to the Gmail account that should receive enquiries.
+2. Go to https://script.google.com and click "New project".
+3. Delete everything in the editor and paste in the code below (from "function doPost" to the end).
+4. Click the disk icon to save. Name the project "Flow Profile website form".
+5. Click "Deploy" (top right) → "New deployment".
+   - Click the gear next to "Select type" → "Web app".
+   - Execute as: Me
+   - Who has access: Anyone
+   - Click "Deploy", then "Authorize access", pick your account,
+     click "Advanced" → "Go to Flow Profile website form (unsafe)" → "Allow".
+     (It says "unsafe" only because you wrote the script yourself. It only sends email to you.)
+6. Copy the "Web app URL" (starts with https://script.google.com/macros/s/...).
+7. In GitHub, open config.js, paste it between the quotes on the gmailScriptUrl line, and commit.
+
+Enquiries will then arrive from your own Gmail with the subject
+"NEW: Website request sent – [name]". Press Reply to answer the customer directly.
+
+---------------- CODE ----------------
+
+function doPost(e) {
+  var TO = "brent@flowprofileplumbing.com";
+  var d = JSON.parse(e.postData.contents);
+  var f = d.fields || {};
+  var order = ["Name", "Phone", "Email", "Suburb", "Service", "Message"];
+
+  var text = "New quote request from the website\n\n";
+  var rows = "";
+  order.forEach(function (k) {
+    var v = (f[k] || "").toString();
+    text += k + ": " + v + "\n";
+    var safe = v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+    if (k === "Phone" && v) safe = '<a href="tel:' + v.replace(/\s/g, "") + '">' + safe + "</a>";
+    rows += '<tr><td style="padding:6px 16px 6px 0;color:#7A7A7A;vertical-align:top;">' + k +
+            '</td><td style="padding:6px 0;color:#2B2B2B;">' + safe + "</td></tr>";
+  });
+  var html = '<div style="font-family:Arial,sans-serif;font-size:14px;">' +
+             '<p style="margin:0 0 12px;">New quote request from the website</p>' +
+             '<table style="border-collapse:collapse;font-size:14px;">' + rows + "</table></div>";
+
+  var opts = { htmlBody: html, name: "Flow Profile Website" };
+  if (d.replyTo) opts.replyTo = d.replyTo;
+  GmailApp.sendEmail(TO, d.subject || "NEW: Website request sent", text, opts);
+
+  return ContentService.createTextOutput("ok");
+}
